@@ -1,0 +1,7 @@
+This history comes from https://github.com/sdwfrost/liblsoda, was written by Simon Frost (@sdwfrost), and refers to the code in src/liblsoda.  Paths referred to below are relative to https://github.com/sdwfrost/liblsoda/tree/master/orig
+
+> This code has a complicated history; all I have done is to refactor the code so that it compiles cleanly, and generates a shared library.
+
+> - The original code by Petzold and Marsh was written in Fortran, then converted to C. It is available from [here](http://www.ccl.net/cca/software/SOURCES/C/kinetics2/index.shtml), and the code is mirrored in the `orig/lsoda-orig` subdirectory.
+> - Heng Li [@lh3](http://github.com/lh3) refactored the code, which is available [here](http://github.com/lh3/misc). The code is mirrored in the `orig/lsoda-lh3` subdirectory.
+> - Yu Feng [@rainwoodman](http://github.com/rainwoodman) refactored Heng Li's code to make it reentrant. The code is available [here](https://github.com/rainwoodman/psphray), and is mirrored in the `orig/lsoda-rainwoodman` subdirectory.

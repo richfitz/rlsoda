@@ -1,8 +1,13 @@
 Package: rlsoda
 Title: Call 'LSODA' From R
 Version: 0.0.1
-Author: Rich FitzJohn
-Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
+Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
+                    email = "rich.fitzjohn@gmail.com"),
+             person("Simon", "Frost", role = "cph"),
+             person("Yu", "Feng", role = "cph"),
+             person("Heng", "Li", role = "cph"),
+             person("Alan", "Hindmarsh", role = "cph"),
+             person("Linda", "Petzold", role = "cph"))
 Description: Wrapper around the C rewrite of 'LSODA'; 'liblsoda'.
 License: MIT + file LICENSE
 Remotes: richfitz/rcmdshlib
