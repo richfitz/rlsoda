@@ -5,11 +5,11 @@ test_that("R", {
   y0 <- c(10, 1, 1)
 
   tt <- seq(0, 1, length.out = 200)
-  res <- lsoda(y0, tt, lorenz, p, deSolve_compatible = TRUE)
+  res <- rlsoda(y0, tt, lorenz, p, deSolve_compatible = TRUE)
   cmp <- deSolve::lsoda(y0, tt, function(...) list(lorenz(...)), p)
   expect_equal(res, unclass(cmp), check.attributes = FALSE, tolerance = 1e-5)
 
-  res2 <- lsoda(y0, tt, lorenz, p,
+  res2 <- rlsoda(y0, tt, lorenz, p,
                 n_out = 2L, output = lorenz_output,
                 deSolve_compatible = TRUE)
 
@@ -26,8 +26,8 @@ test_that("C", {
   y0 <- c(10, 1, 1)
   tt <- seq(0, 1, length.out = 200)
 
-  res <- lsoda(y0, tt, "lorenz", p, deSolve_compatible = TRUE, dllname = "lorenz")
-  cmp <- lsoda(y0, tt, lorenz, p, deSolve_compatible = TRUE)
+  res <- rlsoda(y0, tt, "lorenz", p, deSolve_compatible = TRUE, dllname = "lorenz")
+  cmp <- rlsoda(y0, tt, lorenz, p, deSolve_compatible = TRUE)
 
   expect_equal(res, cmp, tolerance = 1e-10)
 })

@@ -123,7 +123,7 @@
 ##'   deSolve.  This might change in future.
 ##'
 ##' @export
-lsoda <- function(y, times, func, parms, ...,
+rlsoda <- function(y, times, func, parms, ...,
                   n_out = 0L, output = NULL,
                   rtol = 1e-6, atol = 1e-6,
                   step_size_min = 0, step_size_max = 0,
