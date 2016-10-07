@@ -1,5 +1,5 @@
 #include "rlsoda.h"
-
+#include <common.h>
 #include "util.h"
 #include "stdbool.h"
 
@@ -50,7 +50,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   }
 
   bool return_initial = INTEGER(r_return_initial)[0];
-  // bool return_statistics = INTEGER(r_return_statistics)[0];
+  bool return_statistics = INTEGER(r_return_statistics)[0];
   size_t nt = return_initial ? n_times : n_times - 1;
 
   size_t n_out = INTEGER(r_n_out)[0];
@@ -149,24 +149,25 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
     UNPROTECT(1);
   }
 
-  /*
   if (return_statistics) {
-    SEXP stats = PROTECT(allocVector(INTSXP, 4));
-    SEXP stats_nms = PROTECT(allocVector(STRSXP, 4));
-    INTEGER(stats)[0] = obj->n_eval;
+    SEXP stats = PROTECT(allocVector(INTSXP, 5));
+    SEXP stats_nms = PROTECT(allocVector(STRSXP, 5));
+    INTEGER(stats)[0] = ctx.common->nfe;
     SET_STRING_ELT(stats_nms, 0, mkChar("n_eval"));
-    INTEGER(stats)[1] = obj->n_step;
+    INTEGER(stats)[1] = ctx.common->nst;
     SET_STRING_ELT(stats_nms, 1, mkChar("n_step"));
-    INTEGER(stats)[2] = obj->n_accept;
-    SET_STRING_ELT(stats_nms, 2, mkChar("n_accept"));
-    INTEGER(stats)[3] = obj->n_reject;
-    SET_STRING_ELT(stats_nms, 3, mkChar("n_reject"));
+    INTEGER(stats)[2] = ctx.common->nje;
+    SET_STRING_ELT(stats_nms, 2, mkChar("n_jacobian"));
+    INTEGER(stats)[3] = ctx.common->nqu;
+    SET_STRING_ELT(stats_nms, 3, mkChar("last_order"));
+    INTEGER(stats)[4] = ctx.common->nq;
+    SET_STRING_ELT(stats_nms, 4, mkChar("next_order"));
     setAttrib(stats, R_NamesSymbol, stats_nms);
     setAttrib(r_y, install("statistics"), stats);
-    setAttrib(r_y, install("step_size"), ScalarReal(obj->step_size_initial));
+    setAttrib(r_y, install("step_size"), ScalarReal(ctx.common->h));
     UNPROTECT(2);
   }
-  */
+
   // Deterministically clean up if we can, otherwise we clean up by R
   // running the finaliser for us when it garbage collects ptr above.
   rlsoda_ptr_finalizer(ptr);
