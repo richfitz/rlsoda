@@ -7,7 +7,7 @@
 // the interpolation matrix can be exploited in lsoda then we'd be
 // able to justify moving the two together, too.
 SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
-             // SEXP r_n_out, SEXP r_output,
+             SEXP r_n_out, SEXP r_output,
              SEXP r_data_is_real,
              // Tolerance:
              SEXP r_rtol, SEXP r_atol,
@@ -43,6 +43,20 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   // bool return_statistics = INTEGER(r_return_statistics)[0];
   size_t nt = return_initial ? n_times : n_times - 1;
 
+  size_t n_out = INTEGER(r_n_out)[0];
+  const bool has_output = n_out > 0;
+  output_func_ptr output = NULL;
+  double *out = NULL;
+  SEXP r_out = R_NilValue;
+  if (has_output) {
+    output = (output_func_ptr)R_ExternalPtrAddr(r_output);
+    if (output == NULL) {
+      Rf_error("Was passed null pointer for 'output'");
+    }
+    r_out = PROTECT(allocMatrix(REALSXP, n_out, nt));
+    out = REAL(r_out);
+  }
+
   struct lsoda_opt_t opt = {0};
   opt.ixpr = 0;
   opt.itask = 1;
@@ -74,30 +88,32 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
 
   double *yi = (double*) R_alloc(n, sizeof(double));
   memcpy(yi, y_initial, n * sizeof(double));
+  double t = times[0];
 
   lsoda_prepare(&ctx, &opt);
   if (return_initial) {
     memcpy(y, yi, n * sizeof(double));
     y += n;
-    // deal with output here.
+    if (has_output) {
+      output(t, yi, out, data);
+      out += n_out;
+    }
   }
 
-  double t = times[0];
   for (size_t i = 1; i < n_times; ++i) {
     lsoda(&ctx, yi, &t, times[i]);
     memcpy(y, yi, n * sizeof(double));
     y += n;
-    // this is where we'd check for errors
-    //
-    // this is where we'd deal with output
+    if (has_output) {
+      output(t, yi, out, data);
+      out += n_out;
+    }
   }
 
-  /*
-  if (n_out > 0) {
+  if (has_output) {
     setAttrib(r_y, install("output"), r_out);
     UNPROTECT(1);
   }
-  */
 
   /*
   if (return_statistics) {
@@ -174,6 +190,25 @@ int rlsoda_r_harness(double t, double *y, double *dydt, void *data) {
   memcpy(dydt, REAL(ans), n * sizeof(double));
   UNPROTECT(4);
   return 0;
+}
+
+void rlsoda_r_output_harness(double t, const double *y,
+                             double *out, void *data) {
+  SEXP d = (SEXP)data;
+  SEXP
+    parms = VECTOR_ELT(d, 1),
+    rho = VECTOR_ELT(d, 2),
+    output = VECTOR_ELT(d, 4);
+  const int
+    n = INTEGER(VECTOR_ELT(d, 3))[0], // NOTE: different to dde
+    n_out = INTEGER(VECTOR_ELT(d, 5))[0]; // NOTE: different to dde
+  SEXP r_t = PROTECT(ScalarReal(t));
+  SEXP r_y = PROTECT(allocVector(REALSXP, n));
+  memcpy(REAL(r_y), y, n * sizeof(double));
+  SEXP call = PROTECT(lang4(output, r_t, r_y, parms));
+  SEXP ans = PROTECT(eval(call, rho));
+  memcpy(out, REAL(ans), n_out * sizeof(double));
+  UNPROTECT(4);
 }
 
 void rlsoda_ptr_finalizer(SEXP r_ptr) {

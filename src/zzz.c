@@ -6,7 +6,7 @@
 
 // Registration:
 static const R_CallMethodDef call_methods[] = {
-  {"Clsoda",  (DL_FUNC) &r_lsoda,  13},
+  {"Clsoda",  (DL_FUNC) &r_lsoda,  15},
   {NULL,      NULL,                 0}
 };
 void R_init_rlsoda(DllInfo *info) {

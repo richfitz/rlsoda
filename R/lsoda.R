@@ -124,7 +124,7 @@
 ##'
 ##' @export
 lsoda <- function(y, times, func, parms, ...,
-                  ## n_out = 0L, output = NULL,
+                  n_out = 0L, output = NULL,
                   rtol = 1e-6, atol = 1e-6,
                   step_size_min = 0, step_size_max = 0,
                   step_size_initial = 0, step_max_n = 100000L,
@@ -132,10 +132,10 @@ lsoda <- function(y, times, func, parms, ...,
                   dllname = "",
                   parms_are_real = TRUE,
                   ynames = TRUE,
-                  ## outnames = NULL,
+                  outnames = NULL,
                   by_column = FALSE, return_initial = FALSE,
                   return_statistics = FALSE, return_time = FALSE,
-                  ## return_output_with_y = FALSE,
+                  return_output_with_y = FALSE,
                   deSolve_compatible = FALSE) {
   DOTS <- list(...)
   if (length(DOTS) > 0L) {
@@ -173,7 +173,7 @@ lsoda <- function(y, times, func, parms, ...,
   assert_scalar_logical(return_initial)
   assert_scalar_logical(return_statistics)
   assert_scalar_logical(return_time)
-  ## assert_scalar_logical(return_output_with_y)
+  assert_scalar_logical(return_output_with_y)
 
   ## Needed here...
   atol <- rep_len(atol, length(y))
@@ -181,10 +181,8 @@ lsoda <- function(y, times, func, parms, ...,
 
   ynames <- dde:::check_ynames(y, ynames, deSolve_compatible)
 
-  n_out <- 0L
-  output <- NULL
   assert_size(n_out)
-  ## outnames <- dde:::check_outnames(n_out, outnames)
+  outnames <- dde:::check_outnames(n_out, outnames)
 
   if (n_out > 0L) {
     output <- find_function_address(output, dllname)
@@ -196,20 +194,19 @@ lsoda <- function(y, times, func, parms, ...,
       if (!is.function(output)) {
         stop("output must be an R function")
       }
-      parms <- c(parms, output)
+      parms <- c(parms, list(output, n_out))
       output <- find_function_address("rlsoda_r_output_harness", "rlsoda")
     } else {
       if (is.function(output)) {
         stop("output must be a compiled function (name or address)")
       }
     }
-    ## Here, if fun is an R function we need to be careful...
   } else if (!is.null(output)) {
     stop("If 'output' is given, then n_out must be specified")
   }
 
   ret <- .Call(Clsoda, y, as.numeric(times), func, parms,
-               ## as.integer(n_out), output,
+               as.integer(n_out), output,
                parms_are_real,
                ## Tolerance:
                rtol, atol,
@@ -223,7 +220,7 @@ lsoda <- function(y, times, func, parms, ...,
 
   bind_output <- FALSE
   has_output <- n_out > 0L
-  ## bind_output <- has_output && return_output_with_y
+  bind_output <- has_output && return_output_with_y
 
   named <- FALSE
   if (has_output && !is.null(outnames)) {
@@ -253,9 +250,9 @@ lsoda <- function(y, times, func, parms, ...,
       has_output <- FALSE
     }
     ## This is a real pain, but we need to include any attributes set
-    ## on the output by Clsoda; this is going to be "statistics" and
-    ## "history", but it's always possible that additional attributes
-    ## will be added later.
+    ## on the output by Clsoda; this is going to be "statistics", but
+    ## it's always possible that additional attributes will be added
+    ## later.
     for (x in setdiff(names(at), c("dim", "dimnames"))) {
       attr(ret, x) <- at[[x]]
     }
