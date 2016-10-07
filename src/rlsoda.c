@@ -203,41 +203,6 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   return r_y;
 }
 
-/*
-void r_integration_error(dopri_data* obj) {
-  int code = obj->code;
-  double t = obj->t;
-  switch (code) {
-  case ERR_ZERO_TIME_DIFFERENCE:
-    Rf_error("Initialisation failure: Beginning and end times are the same");
-    break;
-  case ERR_INCONSISTENT_TIME:
-    Rf_error("Initialisation failure: Times have inconsistent sign");
-    break;
-  case ERR_TOO_MANY_STEPS:
-    Rf_error("Integration failure: too many steps (at t = %2.5f)", t);
-    break;
-  case ERR_STEP_SIZE_TOO_SMALL:
-    Rf_error("Integration failure: step size too small (at t = %2.5f)", t);
-    break;
-  case ERR_STEP_SIZE_VANISHED:
-    Rf_error("Integration failure: step size vanished (at t = %2.5f)", t);
-    break;
-  case ERR_YLAG_FAIL:
-    Rf_error("Integration failure: did not find time in history (at t = %2.5f)",
-             t);
-    break;
-    //case ERR_STIFF:
-    // TODO: never thrown
-    //Rf_error("Integration failure: problem became stiff (at t = %2.5f)", t);
-    //break;
-  default:
-    Rf_error("Integration failure: (code %d) [dde bug]", code); // #nocov
-    break;
-  }
-}  // #nocov
-*/
-
 int rlsoda_r_harness(double t, double *y, double *dydt, void *data) {
   SEXP d = (SEXP)data;
   SEXP
