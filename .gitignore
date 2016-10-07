@@ -1,0 +1,7 @@
+.Rproj.user
+.Rhistory
+.RData
+src/liblsoda
+src/*.o
+src/*.so
+src/*.dll
