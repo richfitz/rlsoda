@@ -21,4 +21,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
              // Step size control:
              SEXP r_step_size_min, SEXP r_step_size_max,
              SEXP r_step_size_initial, SEXP r_step_max_n,
+             // Other:
+             SEXP tcrit,
+             // Return information:
              SEXP r_return_initial, SEXP r_return_statistics);

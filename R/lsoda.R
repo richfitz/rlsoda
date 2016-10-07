@@ -128,7 +128,7 @@ lsoda <- function(y, times, func, parms, ...,
                   rtol = 1e-6, atol = 1e-6,
                   step_size_min = 0, step_size_max = 0,
                   step_size_initial = 0, step_max_n = 100000L,
-                  ## tcrit = NULL,
+                  tcrit = NULL,
                   dllname = "",
                   parms_are_real = TRUE,
                   ynames = TRUE,
@@ -214,7 +214,7 @@ lsoda <- function(y, times, func, parms, ...,
                step_size_min, step_size_max,
                step_size_initial, as.integer(step_max_n),
                ## Other:
-               ## tcrit, use_853,
+               tcrit,
                ## Return information:
                return_initial, return_statistics)
 

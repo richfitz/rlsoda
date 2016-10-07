@@ -14,6 +14,9 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
              // Step size control:
              SEXP r_step_size_min, SEXP r_step_size_max,
              SEXP r_step_size_initial, SEXP r_step_max_n,
+             // Other:
+             SEXP r_tcrit,
+             // Return information:
              SEXP r_return_initial, SEXP r_return_statistics) {
 
   double *y_initial = REAL(r_y_initial);
@@ -24,6 +27,13 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
 
   if (n_times < 2) {
     Rf_error("At least two times must be given");
+  }
+
+  size_t n_tcrit = 0;
+  double *tcrit = NULL;
+  if (r_tcrit != R_NilValue) {
+    n_tcrit = LENGTH(r_tcrit);
+    tcrit = REAL(r_tcrit);
   }
 
   deriv_func_ptr func = (deriv_func_ptr)R_ExternalPtrAddr(r_func);
@@ -71,7 +81,6 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   // * mxhnil
   // * mxordn
   // * mxords
-  // * tcrit (can deal with this)
   // * hmxi
 
   struct lsoda_context_t ctx = {
@@ -90,6 +99,20 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   memcpy(yi, y_initial, n * sizeof(double));
   double t = times[0];
 
+  size_t tcrit_idx = 0;
+  double sign = copysign(1.0, times[n_times - 1] - t);
+  bool has_tcrit = n_tcrit > 0;
+  if (has_tcrit) {
+    while (sign * tcrit[tcrit_idx] < t && tcrit_idx < n_tcrit) {
+      tcrit_idx++;
+    }
+    if (tcrit_idx < n_tcrit) {
+      opt.itask = 4;
+    } else {
+      has_tcrit = false;
+    }
+  }
+
   lsoda_prepare(&ctx, &opt);
   if (return_initial) {
     memcpy(y, yi, n * sizeof(double));
@@ -107,6 +130,17 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
     if (has_output) {
       output(t, yi, out, data);
       out += n_out;
+    }
+    if (has_tcrit) {
+      while (tcrit_idx < n_tcrit && sign * tcrit[tcrit_idx] < sign * t) {
+        tcrit_idx++;
+      }
+      if (tcrit_idx < n_tcrit) {
+        ctx.opt->tcrit = tcrit[tcrit_idx];
+      } else {
+        has_tcrit = false;
+        ctx.opt->itask = 1;
+      }
     }
   }
 
