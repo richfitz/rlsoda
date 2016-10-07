@@ -5,7 +5,9 @@ Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
 Description: Wrapper around the C rewrite of 'LSODA'; 'liblsoda'.
 License: MIT + file LICENSE
+Remotes: richfitz/rcmdshlib
 Suggests:
     deSolve,
+    rcmdshlib,
     testthat
 RoxygenNote: 5.0.1

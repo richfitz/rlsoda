@@ -5,3 +5,4 @@
 ^src/liblsoda/Make.inc$
 ^src/liblsoda/orig$
 ^src/liblsoda/test$
+^\.valgrind_ignore$
