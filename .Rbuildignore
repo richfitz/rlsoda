@@ -3,6 +3,9 @@
 ^setup.sh$
 ^src/liblsoda/Makefile$
 ^src/liblsoda/Make.inc$
+^src/liblsoda/src/.*\.o$
 ^src/liblsoda/orig$
 ^src/liblsoda/test$
 ^\.valgrind_ignore$
+^Makefile$
+^notes\.md$
