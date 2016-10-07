@@ -24,7 +24,7 @@ SOURCES = liblsoda/src/cfode.c \
 	liblsoda/src/stoda.c \
 	liblsoda/src/strdup_printf.c \
 	liblsoda/src/vmnorm.c \
-	r_lsoda.c \
+	rlsoda.c \
 	util.c \
 	zzz.c
 OBJECTS = $(SOURCES:.c=.o)

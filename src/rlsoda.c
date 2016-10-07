@@ -1,4 +1,4 @@
-#include "r_lsoda.h"
+#include "rlsoda.h"
 
 #include "util.h"
 #include "stdbool.h"

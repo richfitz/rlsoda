@@ -2,7 +2,7 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 
-#include "r_lsoda.h"
+#include "rlsoda.h"
 
 // Registration:
 static const R_CallMethodDef call_methods[] = {
