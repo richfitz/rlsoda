@@ -179,12 +179,13 @@ rlsoda <- function(y, times, func, parms, ...,
   atol <- rep_len(atol, length(y))
   rtol <- rep_len(rtol, length(y))
 
-  ynames <- dde:::check_ynames(y, ynames, deSolve_compatible)
+  ynames <- check_ynames(y, ynames, deSolve_compatible)
 
   assert_size(n_out)
-  outnames <- dde:::check_outnames(n_out, outnames)
+  has_output <- n_out > 0L
+  outnames <- check_outnames(n_out, outnames)
 
-  if (n_out > 0L) {
+  if (has_output) {
     output <- find_function_address(output, dllname)
     ## NOTE: The same-typedness of output/func is not really
     ## necessary, but I think it's simplest to think about if we
@@ -218,52 +219,8 @@ rlsoda <- function(y, times, func, parms, ...,
                ## Return information:
                return_initial, return_statistics)
 
-  bind_output <- FALSE
-  has_output <- n_out > 0L
-  bind_output <- has_output && return_output_with_y
-
-  named <- FALSE
-  if (has_output && !is.null(outnames)) {
-    named <- return_output_with_y
-    rownames(attr(ret, "output")) <- outnames
-  }
-  if (!is.null(ynames)) {
-    named <- TRUE
-    rownames(ret) <- ynames
-  }
-
-  if (return_time || bind_output) {
-    at <- attributes(ret)
-    if (return_time) {
-      time <- matrix(if (return_initial) times else times[-1L], 1L,
-                     dimnames=if (named) list("time", NULL) else NULL)
-    } else {
-      time <- NULL
-    }
-
-    ret <- rbind(if (return_time) time,
-                 ret,
-                 if (bind_output) at[["output"]],
-                 deparse.level = 0L)
-    if (bind_output) {
-      at[["output"]] <- NULL
-      has_output <- FALSE
-    }
-    ## This is a real pain, but we need to include any attributes set
-    ## on the output by Clsoda; this is going to be "statistics", but
-    ## it's always possible that additional attributes will be added
-    ## later.
-    for (x in setdiff(names(at), c("dim", "dimnames"))) {
-      attr(ret, x) <- at[[x]]
-    }
-  }
-
-  if (by_column) {
-    ret <- t.default(ret)
-    if (has_output) {
-      attr(ret, "output") <- t.default(attr(ret, "output"))
-    }
-  }
-
-  ret
+  prepare_output(ret, times, ynames, outnames, has_output,
+                 by_column, return_initial, return_time,
+                 return_output_with_y,
+                 "time")
 }
