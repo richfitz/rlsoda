@@ -107,6 +107,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
       tcrit_idx++;
     }
     if (tcrit_idx < n_tcrit) {
+      opt.tcrit = tcrit[tcrit_idx];
       opt.itask = 4;
     } else {
       has_tcrit = false;
@@ -123,16 +124,39 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
     }
   }
 
-  for (size_t i = 1; i < n_times; ++i) {
-    lsoda(&ctx, yi, &t, times[i]);
-    memcpy(y, yi, n * sizeof(double));
-    y += n;
-    if (has_output) {
-      output(t, yi, out, data);
-      out += n_out;
+  double t_next = times[1];
+  bool store_next = true;
+  if (has_tcrit) {
+    if (sign * tcrit[tcrit_idx] < sign * t_next) {
+      t_next = tcrit[tcrit_idx];
+      store_next = false;
+    }
+  }
+
+  // This is *really* nasty book-keeping, but it should work OK.  This
+  // interleaves the critical times with the storage times, organises
+  // stopping at each of them and recording the output appropriately.
+  for (size_t i = 1; i < n_times;) {
+    lsoda(&ctx, yi, &t, t_next);
+    if (ctx.error) {
+      Rf_error("Integration error: %s", ctx.error);
+    }
+    if (store_next) {
+      memcpy(y, yi, n * sizeof(double));
+      y += n;
+      if (has_output) {
+        output(t, yi, out, data);
+        out += n_out;
+      }
+      ++i;
+      if (i < n_times) {
+        t_next = times[i];
+      }
+    } else {
+      store_next = true;
     }
     if (has_tcrit) {
-      while (tcrit_idx < n_tcrit && sign * tcrit[tcrit_idx] < sign * t) {
+      while (sign * tcrit[tcrit_idx] < sign * t) {
         tcrit_idx++;
       }
       if (tcrit_idx < n_tcrit) {
@@ -140,6 +164,10 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
       } else {
         has_tcrit = false;
         ctx.opt->itask = 1;
+      }
+      if (sign * tcrit[tcrit_idx] <= sign * t_next) {
+        t_next = tcrit[tcrit_idx];
+        store_next = !(sign * tcrit[tcrit_idx] < sign * t_next);
       }
     }
   }

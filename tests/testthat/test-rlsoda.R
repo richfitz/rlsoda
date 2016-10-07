@@ -31,3 +31,27 @@ test_that("C", {
 
   expect_equal(res, cmp, tolerance = 1e-10)
 })
+
+test_that("Critical times", {
+  target <- function(t, y, p) {
+    if (t <= 1) {
+      y
+    } else {
+      -5 * y
+    }
+  }
+  tt <- seq(0, 2, length.out = 200)
+  res1 <- rlsoda(1, tt, target, numeric(0), return_statistics = TRUE)
+  res2 <- rlsoda(1, tt, target, numeric(0), tcrit = 1, return_statistics = TRUE)
+  res3 <- rlsoda(1, tt, target, numeric(0), tcrit = c(-1, 1),
+                return_statistics = TRUE)
+
+  s1 <- attr(res1, "statistics")
+  s2 <- attr(res2, "statistics")
+  s3 <- attr(res2, "statistics")
+  expect_lt(s2[["n_step"]], s1[["n_step"]])
+  expect_equal(s2, s3)
+  expect_identical(res2, res3)
+
+  expect_is(attr(res1, "step_size"), "numeric")
+})
