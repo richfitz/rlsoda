@@ -28,6 +28,17 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   if (n_times < 2) {
     Rf_error("At least two times must be given");
   }
+  if (times[n_times - 1] == times[0]) {
+    Rf_error("Initialisation failure: Beginning and end times are the same");
+  }
+  const double sign = copysign(1.0, times[n_times - 1] - times[0]);
+  for (size_t i = 0; i < n_times - 1; ++i) {
+    double t0 = times[i], t1 = times[i + 1];
+    bool err = (sign > 0 && t1 < t0) || (sign < 0 && t1 > t0);
+    if (err) {
+      Rf_error("Initialisation failure: Times have inconsistent sign");
+    }
+  }
 
   size_t n_tcrit = 0;
   double *tcrit = NULL;
@@ -100,7 +111,6 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   double t = times[0];
 
   size_t tcrit_idx = 0;
-  double sign = copysign(1.0, times[n_times - 1] - t);
   bool has_tcrit = n_tcrit > 0;
   if (has_tcrit) {
     while (sign * tcrit[tcrit_idx] < t && tcrit_idx < n_tcrit) {

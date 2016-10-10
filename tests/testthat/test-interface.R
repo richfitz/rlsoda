@@ -78,3 +78,19 @@ test_that("Missing output function", {
   expect_error(rlsoda(1, 0:10, growth, NULL, n_out = 1),
                "Invalid input for 'output'")
 })
+
+test_that("time validation", {
+  p <- runif(5)
+  y <- runif(5)
+  times <- seq(0, 1, length.out = 11)
+  growth <- function(t, y, p) {
+    y * p
+  }
+
+  expect_error(rlsoda(y, numeric(0), growth, p),
+               "At least two times must be given")
+  expect_error(rlsoda(y, c(0, 0), growth, p),
+               "Beginning and end times are the same")
+  expect_error(rlsoda(y, c(0, 2, 1), growth, p),
+               "Times have inconsistent sign")
+})
