@@ -94,14 +94,13 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   // * mxords
   // * hmxi
 
-  struct lsoda_context_t ctx = {
-    .function = func,
-    .neq = n,
-    .data = data,
-    .state = 1,
-  };
+  struct lsoda_context_t * ctx = Calloc(1, struct lsoda_context_t);
+  ctx->function = func;
+  ctx->neq = n;
+  ctx->data = data;
+  ctx->state = 1;
 
-  SEXP ptr = PROTECT(rlsoda_ptr_create(&ctx));
+  SEXP ptr = PROTECT(rlsoda_ptr_create(ctx));
 
   SEXP r_y = PROTECT(allocMatrix(REALSXP, n, nt));
   double *y = REAL(r_y);
@@ -124,7 +123,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
     }
   }
 
-  lsoda_prepare(&ctx, &opt);
+  lsoda_prepare(ctx, &opt);
   if (return_initial) {
     memcpy(y, yi, n * sizeof(double));
     y += n;
@@ -141,9 +140,14 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   // interleaves the critical times with the storage times, organises
   // stopping at each of them and recording the output appropriately.
   for (size_t i = 1; i < n_times;) {
-    lsoda(&ctx, yi, &t, t_next);
-    if (ctx.error) {
-      Rf_error("Integration error: %s", ctx.error);
+    lsoda(ctx, yi, &t, t_next);
+    if (ctx->error) {
+      const size_t len = strlen(ctx->error) + 1;
+      char *msg = (char*) R_alloc(len, sizeof(char));
+      strncpy(msg, ctx->error, len);
+      free(ctx->error);
+      ctx->error = NULL;
+      Rf_error("Integration error: %s", msg);
     }
     if (store_next) {
       memcpy(y, yi, n * sizeof(double));
@@ -164,10 +168,10 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
         tcrit_idx++;
       }
       if (tcrit_idx < n_tcrit) {
-        ctx.opt->tcrit = tcrit[tcrit_idx];
+        ctx->opt->tcrit = tcrit[tcrit_idx];
       } else {
         has_tcrit = false;
-        ctx.opt->itask = 1;
+        ctx->opt->itask = 1;
       }
       if (has_tcrit && sign * tcrit[tcrit_idx] <= sign * t_next) {
         t_next = tcrit[tcrit_idx];
@@ -186,19 +190,19 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   if (return_statistics) {
     SEXP stats = PROTECT(allocVector(INTSXP, 5));
     SEXP stats_nms = PROTECT(allocVector(STRSXP, 5));
-    INTEGER(stats)[0] = ctx.common->nfe;
+    INTEGER(stats)[0] = ctx->common->nfe;
     SET_STRING_ELT(stats_nms, 0, mkChar("n_eval"));
-    INTEGER(stats)[1] = ctx.common->nst;
+    INTEGER(stats)[1] = ctx->common->nst;
     SET_STRING_ELT(stats_nms, 1, mkChar("n_step"));
-    INTEGER(stats)[2] = ctx.common->nje;
+    INTEGER(stats)[2] = ctx->common->nje;
     SET_STRING_ELT(stats_nms, 2, mkChar("n_jacobian"));
-    INTEGER(stats)[3] = ctx.common->nqu;
+    INTEGER(stats)[3] = ctx->common->nqu;
     SET_STRING_ELT(stats_nms, 3, mkChar("last_order"));
-    INTEGER(stats)[4] = ctx.common->nq;
+    INTEGER(stats)[4] = ctx->common->nq;
     SET_STRING_ELT(stats_nms, 4, mkChar("next_order"));
     setAttrib(stats, R_NamesSymbol, stats_nms);
     setAttrib(r_y, install("statistics"), stats);
-    setAttrib(r_y, install("step_size"), ScalarReal(ctx.common->h));
+    setAttrib(r_y, install("step_size"), ScalarReal(ctx->common->h));
     UNPROTECT(2);
   }
 
@@ -249,6 +253,7 @@ void rlsoda_ptr_finalizer(SEXP r_ptr) {
   void *obj = R_ExternalPtrAddr(r_ptr);
   if (obj) {
     lsoda_free((struct lsoda_context_t*) obj);
+    Free(obj);
     R_ClearExternalPtr(r_ptr);
   }
 }

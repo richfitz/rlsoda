@@ -85,6 +85,7 @@ test_that("integration failure is caught", {
   expect_error(rlsoda(y0, tt, "lorenz", p, dllname = "lorenz",
                       step_max_n = 10),
                "10 steps taken before reaching tout")
+  gc() # because there's an early exit; confirm no crash
 })
 
 test_that("SEXP parameters", {
