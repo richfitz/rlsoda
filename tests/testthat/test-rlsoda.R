@@ -86,3 +86,31 @@ test_that("integration failure is caught", {
                       step_max_n = 10),
                "10 steps taken before reaching tout")
 })
+
+test_that("SEXP parameters", {
+  tt <- seq(0, 10, length.out = 101)
+  p <- c(10, 28, 8 / 3)
+  y0 <- c(10, 1, 1)
+  cmp <- rlsoda(y0, tt, "lorenz", p, dllname = "lorenz")
+  res <- rlsoda(y0, tt, "lorenz", p, dllname = "lorenz2",
+                parms_are_real = FALSE)
+  expect_identical(res, cmp)
+})
+
+test_that("pointer parameters", {
+  p <- c(10, 28, 8 / 3)
+  ptr <- .Call("lorenz_init",  p, PACKAGE = "lorenz3")
+  expect_is(ptr, "externalptr")
+
+  tt <- seq(0, 10, length.out = 101)
+  y0 <- c(10, 1, 1)
+
+  cmp <- rlsoda(y0, tt, "lorenz", p, dllname = "lorenz")
+  res <- rlsoda(y0, tt, "lorenz", ptr, dllname = "lorenz3",
+                parms_are_real = FALSE)
+  expect_identical(res, cmp)
+
+  ## Argument is optional:
+  res <- rlsoda(y0, tt, "lorenz", ptr, dllname = "lorenz3")
+  expect_identical(res, cmp)
+})
