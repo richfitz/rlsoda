@@ -113,7 +113,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   size_t tcrit_idx = 0;
   bool has_tcrit = n_tcrit > 0;
   if (has_tcrit) {
-    while (sign * tcrit[tcrit_idx] < t && tcrit_idx < n_tcrit) {
+    while (sign * tcrit[tcrit_idx] <= t && tcrit_idx < n_tcrit) {
       tcrit_idx++;
     }
     if (tcrit_idx < n_tcrit) {
@@ -136,12 +136,6 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
 
   double t_next = times[1];
   bool store_next = true;
-  if (has_tcrit) {
-    if (sign * tcrit[tcrit_idx] < sign * t_next) {
-      t_next = tcrit[tcrit_idx];
-      store_next = false;
-    }
-  }
 
   // This is *really* nasty book-keeping, but it should work OK.  This
   // interleaves the critical times with the storage times, organises
@@ -166,7 +160,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
       store_next = true;
     }
     if (has_tcrit) {
-      while (sign * tcrit[tcrit_idx] < sign * t) {
+      while (sign * tcrit[tcrit_idx] <= sign * t) {
         tcrit_idx++;
       }
       if (tcrit_idx < n_tcrit) {
@@ -178,6 +172,8 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
       if (sign * tcrit[tcrit_idx] <= sign * t_next) {
         t_next = tcrit[tcrit_idx];
         store_next = !(sign * tcrit[tcrit_idx] < sign * t_next);
+      } else {
+        store_next = true;
       }
     }
   }

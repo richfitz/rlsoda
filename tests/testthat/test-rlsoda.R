@@ -44,14 +44,32 @@ test_that("Critical times", {
   res1 <- rlsoda(1, tt, target, numeric(0), return_statistics = TRUE)
   res2 <- rlsoda(1, tt, target, numeric(0), tcrit = 1, return_statistics = TRUE)
   res3 <- rlsoda(1, tt, target, numeric(0), tcrit = c(-1, 1),
-                return_statistics = TRUE)
+                 return_statistics = TRUE)
+
+  ## The tolerance is really low here because the non-tcrit version
+  ## totally misses the big peak
+  expect_equal(as.vector(res1), as.vector(res2), tolerance = 1e-3)
 
   s1 <- attr(res1, "statistics")
   s2 <- attr(res2, "statistics")
-  s3 <- attr(res2, "statistics")
+  s3 <- attr(res3, "statistics")
   expect_lt(s2[["n_step"]], s1[["n_step"]])
   expect_equal(s2, s3)
   expect_identical(res2, res3)
 
   expect_is(attr(res1, "step_size"), "numeric")
+
+  ## A few more related cases:
+  res4 <- rlsoda(1, tt, target, numeric(0), tcrit = c(0, 1),
+                 return_statistics = TRUE)
+  expect_identical(res4, res2)
+
+  res5 <- rlsoda(1, tt, target, numeric(0), tcrit = c(1, 1, 1),
+                 return_statistics = TRUE)
+  expect_identical(res5, res2)
+
+  ## No valid tcrit:
+  res6 <- rlsoda(1, tt, target, numeric(0), tcrit = -1,
+                 return_statistics = TRUE)
+  expect_identical(res6, res1)
 })
