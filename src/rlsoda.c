@@ -113,7 +113,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
   size_t tcrit_idx = 0;
   bool has_tcrit = n_tcrit > 0;
   if (has_tcrit) {
-    while (sign * tcrit[tcrit_idx] <= t && tcrit_idx < n_tcrit) {
+    while (tcrit_idx < n_tcrit && sign * tcrit[tcrit_idx] <= t) {
       tcrit_idx++;
     }
     if (tcrit_idx < n_tcrit) {
@@ -160,7 +160,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
       store_next = true;
     }
     if (has_tcrit) {
-      while (sign * tcrit[tcrit_idx] <= sign * t) {
+      while (tcrit_idx < n_tcrit && sign * tcrit[tcrit_idx] <= sign * t) {
         tcrit_idx++;
       }
       if (tcrit_idx < n_tcrit) {
@@ -169,7 +169,7 @@ SEXP r_lsoda(SEXP r_y_initial, SEXP r_times, SEXP r_func, SEXP r_data,
         has_tcrit = false;
         ctx.opt->itask = 1;
       }
-      if (sign * tcrit[tcrit_idx] <= sign * t_next) {
+      if (has_tcrit && sign * tcrit[tcrit_idx] <= sign * t_next) {
         t_next = tcrit[tcrit_idx];
         store_next = !(sign * tcrit[tcrit_idx] < sign * t_next);
       } else {
