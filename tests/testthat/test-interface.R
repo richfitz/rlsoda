@@ -79,6 +79,28 @@ test_that("Missing output function", {
                "Invalid input for 'output'")
 })
 
+test_that("Native Symbol interface", {
+  p <- c(10, 28, 8 / 3)
+  y0 <- c(10, 1, 1)
+  times <- seq(0, 10, length.out = 101)
+  func <- getNativeSymbolInfo("lorenz", PACKAGE = "lorenz")
+  y <- rlsoda(y0, times, func, p)
+  expect_identical(y, rlsoda(y0, times, "lorenz", p, dllname = "lorenz"))
+})
+
+test_that("NULL pointer safety", {
+  p <- c(10, 28, 8 / 3)
+  y <- c(10, 1, 1)
+  times <- seq(0, 10, length.out = 101)
+
+  func <- getNativeSymbolInfo("lorenz", PACKAGE = "lorenz")
+  func <- unserialize(serialize(func, NULL))
+
+  expect_error(rlsoda(y, times, func, p), "null pointer")
+  expect_error(rlsoda(y, times, "lorenz", p, output = func, n_out = 2L),
+               "null pointer")
+})
+
 test_that("time validation", {
   p <- runif(5)
   y <- runif(5)
