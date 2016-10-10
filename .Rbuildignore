@@ -9,3 +9,4 @@
 ^\.valgrind_ignore$
 ^Makefile$
 ^notes\.md$
+^\.travis\.yml$
