@@ -3,3 +3,5 @@ warnings_are_errors: false
 sudo: required
 before_install:
   ./setup.sh
+after_success:
+  - Rscript -e 'covr::codecov()'
