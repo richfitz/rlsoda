@@ -73,3 +73,16 @@ test_that("Critical times", {
                  return_statistics = TRUE)
   expect_identical(res6, res1)
 })
+
+test_that("integration failure is caught", {
+  p <- c(10, 28, 8 / 3)
+  y0 <- c(10, 1, 1)
+  tt <- seq(0, 5, length.out = 200)
+  ## TODO: Actually too many steps may be taken; using max time here
+  ## of 1 will complete!
+  res <- rlsoda(y0, tt, "lorenz", p, dllname = "lorenz",
+                return_statistics = TRUE)
+  expect_error(rlsoda(y0, tt, "lorenz", p, dllname = "lorenz",
+                      step_max_n = 10),
+               "10 steps taken before reaching tout")
+})
